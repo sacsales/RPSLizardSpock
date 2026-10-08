@@ -1,10 +1,8 @@
-
+import math 
 import cv2
 import mediapipe as mp
 from mediapipe.tasks import python 
 from mediapipe.tasks.python import vision
-
-
 
 
 print("MediaPipe version:", mp.__version__)
@@ -19,6 +17,8 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 600)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 500)
 
+
+#for the skeleton - which hand landmarks map to which? 
 HAND_CONNECTIONS = [
     (0, 1), (1, 2), (2, 3), (3, 4),         # thumb
     (0, 5), (5, 6), (6, 7), (7, 8),         # index
@@ -28,13 +28,54 @@ HAND_CONNECTIONS = [
     (0, 17),                                # palm edge
 ]
 
+
+def dist(a, b):
+    return math.hypot(a.x - b.x, a.y - b.y)
+
+
+def finger_extended(lm, tip, pip):
+    return dist(lm[0], lm[tip]) > dist(lm[0], lm[pip])
+
+
+# 2. Define text properties
+text = "Hello, OpenCV!"
+coordinates = (50, 100)  # (X, Y) position of the bottom-left corner of the text
+font = cv2.FONT_HERSHEY_SIMPLEX  # Font type
+font_scale = 1.0  # Font size multiplier
+color = (0, 255, 0)  # Green color in BGR format
+thickness = 2  # Thickness of the lines in pixels
+
+
 def draw_hand(frame, landmarks):
     h, w = frame.shape[:2]
-    points = [(int(lm.x * w), int(lm.y * h)) for lm in landmarks]
+    points = [(int(lm.x * w), int(lm.y * h)) for lm in landmarks] #map image coords to pixel coords
+
+
     for a, b in HAND_CONNECTIONS:
-        cv2.line(frame, points[a], points[b], (0, 255, 0), 2)
+        cv2.line(frame, points[a], points[b], (0, 255, 0), 2) #draw lines
+
+    
     for p in points:
         cv2.circle(frame, p, 4, (0, 0, 255), -1)
+        origin = (p[0] + 6, p[1] + 4)
+        #cv2.putText(frame, str(p), origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+    
+
+ #draw hand landmark points 
+
+def finger_up(name, finger_tip, finger_mid):
+    
+    wrist = single_hand_landmarks[5]
+
+    tip_to_mid = dist(finger_tip, finger_mid)
+    tip_to_base = dist(finger_tip, wrist)
+
+    if tip_to_base > tip_to_mid:
+        status = "up"
+    else:
+        status = "down"
+
+    return status 
 
 
 
@@ -48,17 +89,42 @@ while cap.isOpened():
 
     # Convert BGR -> RGB for MediaPipe
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
 
-    # Detect hand landmarks from the input image.
+    # Detect hand landmarks from the input image
     result = detector.detect(mp_image)
 
-
-
     if result.hand_landmarks:
-         for hand_landmarks in result.hand_landmarks:
-                draw_hand(frame, hand_landmarks)
+         for single_hand_landmarks in result.hand_landmarks:  #result.hand_landmarks is different positions of hand.
+                draw_hand(frame, single_hand_landmarks) #single_hand_landmarks refers to the different joints in 1 hand pos...
+
+                finger_array = [
+                    ["pointer", 8, 6],
+                    ["middle", 12, 10],
+                    ["ring", 16, 14],
+                    ["pinky", 20, 18],
+                ]
+                #finger names, tip, and middle joint
+
+
+                for finger in finger_array:
+                    name = finger[0]
+                    tip = single_hand_landmarks[finger[1]]
+                    mid = single_hand_landmarks[finger[2]]
+                    status = finger_up(name, tip, mid)
+
+                    h, w = frame.shape[:2]
+                    
+                    origin = (int(tip.x * w), int (tip.y * h))
+                    
+                    
+
+                    cv2.putText(frame, f"{name}: {status} ", origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+
+
+
+
+            
 
     cv2.imshow("window", frame)
 
