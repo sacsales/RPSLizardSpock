@@ -134,17 +134,43 @@ while cap.isOpened():
                 cv2.line(frame, find_origin(frame, mid_joint), find_origin(frame, ring_joint), (0, 255, 0), 2)
 
 
-                #cv2.line(frame, pointerOrigin, thumbOrigin, (0, 255, 0), 2)
+                cv2.line(frame, pointerOrigin, thumbOrigin, (0, 255, 0), 2)
                 thumb_pointer_dist = dist(pointer_tip, thumb_tip)
                 mid_ring_dist = dist(mid_joint, ring_joint)
                
 
-                cv2.putText(frame, str(mid_ring_dist), find_origin(frame, mid_joint), font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+                #cv2.putText(frame, str(mid_ring_dist), find_origin(frame, mid_joint), font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
 
-                if mid_ring_dist > 0.09:
-                    print("spock")
+                SPOCK_MID_RING_THRESHOLD = 0.09
+                SPOCK_THUMB_POINTER_THRESHOLD = 0.20
+                LIZARD_THUMB_POINTER_THRESHOLD = 0.10
+                LIZARD_MID_RING_THRESHOLD = 0.05
+
+                if mid_ring_dist > SPOCK_MID_RING_THRESHOLD and thumb_pointer_dist > SPOCK_THUMB_POINTER_THRESHOLD:
+                    spockStatus = "spock"
                 else:
-                    print("not spock")
+                    spockStatus = "not spock"
+
+
+                if thumb_pointer_dist > LIZARD_THUMB_POINTER_THRESHOLD and  mid_ring_dist < LIZARD_MID_RING_THRESHOLD:
+                    lizardStatus = "lizard"
+                else:
+                    lizardStatus = "not lizard"
+
+                
+
+                
+
+
+                cv2.putText(frame, spockStatus, (100,100), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.putText(frame, f"thumb pointer dist: {thumb_pointer_dist}", (100,150), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.putText(frame, lizardStatus, (100,200), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.putText(frame, f"mid ring dist: {mid_ring_dist}", (100,250), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+
+                
+
+
+
 
 
 
