@@ -11,7 +11,7 @@ print("OpenCV version:", cv2.__version__)
 
 
 base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
-options = vision.HandLandmarkerOptions(base_options=base_options,num_hands=2)
+options = vision.HandLandmarkerOptions(base_options=base_options,num_hands=1)
 detector = vision.HandLandmarker.create_from_options(options)
 #setup the hand tracking stuff
 
@@ -113,8 +113,17 @@ def get_finger_array(single_hand_landmarks): #returns array of four fingers and 
 
 def is_spock(single_hand_landmarks):
 
+    finger_status_array = get_finger_array(single_hand_landmarks)
+
+    if finger_status_array == ["up", "up", "up", "up"]:
+        all_up = True 
+    else:
+        all_up = False 
+
     pointer_tip = single_hand_landmarks[8]
     thumb_tip = single_hand_landmarks[4]
+    middle_tip = single_hand_landmarks[12]
+    ring_tip = single_hand_landmarks[16]
 
     mid_joint = single_hand_landmarks[11]
     ring_joint = single_hand_landmarks[15]
@@ -122,8 +131,9 @@ def is_spock(single_hand_landmarks):
     
     thumb_pointer_dist = dist(pointer_tip, thumb_tip)
     mid_ring_dist = dist(mid_joint, ring_joint)
+    mid_pointer_dist = dist(middle_tip, pointer_tip)
 
-    if mid_ring_dist > SPOCK_MID_RING_THRESHOLD and thumb_pointer_dist > SPOCK_THUMB_POINTER_THRESHOLD:
+    if (mid_ring_dist > SPOCK_MID_RING_THRESHOLD) and (thumb_pointer_dist > SPOCK_THUMB_POINTER_THRESHOLD) and all_up and (mid_pointer_dist < mid_ring_dist):
         spockStatus = True
     else:
         spockStatus = False
@@ -226,34 +236,45 @@ while cap.isOpened():
 
                 
 
-                spockStatus = is_spock(single_hand_landmarks)
-                lizardStatus = is_lizard(single_hand_landmarks)
-
+                
                
 
                 regular_pose_text = "aaa"
 
-            
+
+                """
+
+                spockStatus = is_spock(single_hand_landmarks)
+                lizardStatus = is_lizard(single_hand_landmarks)
+                
+                Debug Text, uncomment to display some values 
 
                 cv2.putText(frame, f"spock: {spockStatus}", (0,100), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
                 cv2.putText(frame, f"lizard: {lizardStatus}", (0,150), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
                
                 cv2.putText(frame, str(finger_status_array), (0,200), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
 
-                #display some stuff for debugging 
-
+                
                 #cv2.putText(frame, f"thumb pointer dist: {thumb_pointer_dist}", (0,125), font, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
                 #cv2.putText(frame, f"mid ring dist: {mid_ring_dist}", (0,175), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-        
 
-                if is_scissors(single_hand_landmarks):
+                """
+
+
+                if is_lizard(single_hand_landmarks):
+                    regular_pose_text = "lizard"
+                elif is_scissors(single_hand_landmarks):
                     regular_pose_text = "scissors"
+                elif is_spock(single_hand_landmarks):
+                    regular_pose_text = "spock"
                 elif is_paper(single_hand_landmarks):
                     regular_pose_text = "paper"
                 elif is_rock(single_hand_landmarks):
                     regular_pose_text = "rock"
+                else:
+                    regular_pose_text = "unknown"
 
-                cv2.putText(frame, regular_pose_text, (0,50), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.putText(frame, regular_pose_text, (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
                     
 
                 
