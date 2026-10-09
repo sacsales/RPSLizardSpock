@@ -78,7 +78,8 @@ def draw_hand(frame, landmarks):
     
  
 
-def finger_up(name, finger_tip, finger_mid):
+def finger_up(single_hand_landmarks, finger_tip, finger_mid):
+
     wrist = single_hand_landmarks[0]
 
     tip_to_base = dist(finger_tip, wrist)
@@ -110,7 +111,7 @@ def get_finger_array(single_hand_landmarks): #returns array of four fingers and 
         name = finger[0]
         tip = single_hand_landmarks[finger[1]]
         mid = single_hand_landmarks[finger[2]]
-        status = finger_up(name, tip, mid)
+        status = finger_up(single_hand_landmarks, tip, mid)
 
         #h, w = frame.shape[:2]
         #origin = (int(tip.x * w), int (tip.y * h))
@@ -193,9 +194,6 @@ def is_scissors(single_hand_landmarks):
         return True
     return False
 
-
-
-
 def fight(p1, p2):
     """
     This function makes a one-way comparison of the moves of the first against the second player
@@ -237,7 +235,6 @@ def fight(p1, p2):
     return result
 
 
-
 def double_check(p1, p2):
     """
     If the first 'pass' of comparison returned an empty string (no move combination matches),
@@ -263,6 +260,15 @@ def double_check(p1, p2):
         winner = "CPU"
     return winner
 
+def find_reason(p1, p2):
+    if fight(p1, p2) == "Draw":
+        reason = "Draw! No points awarded."
+    elif fight(p1,p2) != "":
+        reason = fight(p1, p2)
+    else: #switch
+        reason = fight(p2, p1)
+        
+    return reason
 
 def translate_choice(choice):
     """
@@ -313,7 +319,6 @@ def computer_choice():
     return cpu_choice
 
 
-
 def round():
     """
     This function simulates 1 round of the game, by getting the user's move, generating the computers move and returning
@@ -329,158 +334,185 @@ def round():
     verdict = double_check(user, cpu)
     return verdict
 
+
+
+def main(): 
+
+    start_time = time.time()
+    timer_value = 0
+    last_pose = None 
+    verified_pose = None
+    round_played = False 
     
-while cap.isOpened():
 
-    success, frame = cap.read()
-    if not success:
-        continue
+    
+    while cap.isOpened():
 
-    frame = cv2.flip(frame, 1)
-    h, w, _ = frame.shape
+        success, frame = cap.read()
+        if not success:
+            continue
 
-    # fix colors
-    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+        frame = cv2.flip(frame, 1)
+        h, w, _ = frame.shape
 
-    # detect hand landmarks from the input image
-    result = detector.detect(mp_image)
+        # fix colors
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
 
-    current_time = time.time()
+        # detect hand landmarks from the input image
+        result = detector.detect(mp_image)
 
-    if result.hand_landmarks: #landmarks detected??
-         for single_hand_landmarks in result.hand_landmarks:  #result.hand_landmarks is different positions of hand.
-                draw_hand(frame, single_hand_landmarks) #single_hand_landmarks refers to an array of all the different joints in 1 hand pos...
+        current_time = time.time()
 
-
-                finger_status_array = get_finger_array(single_hand_landmarks)
-
-
-                pointer_tip = single_hand_landmarks[8]
-                thumb_tip = single_hand_landmarks[4]
-                middle_tip = single_hand_landmarks[12]
-                ring_tip = single_hand_landmarks[16]
-
-                mid_joint = single_hand_landmarks[11]
-                ring_joint = single_hand_landmarks[15]
-                #define needed joint names...
-
-                #tip_array = [pointer_tip, thumb_tip, middle_tip, ring_tip]
+        if result.hand_landmarks: #landmarks detected??
+            for single_hand_landmarks in result.hand_landmarks:  #result.hand_landmarks is different positions of hand.
+                    draw_hand(frame, single_hand_landmarks) #single_hand_landmarks refers to an array of all the different joints in 1 hand pos...
 
 
-
-                cv2.line(frame, find_origin(frame, mid_joint), find_origin(frame, ring_joint), (0, 255, 0), 2) #spock line
-                cv2.line(frame, find_origin(frame, pointer_tip), find_origin(frame, thumb_tip), (0, 255, 0), 2) #pointer -> thumb line 
+                    finger_status_array = get_finger_array(single_hand_landmarks)
 
 
-               
+                    pointer_tip = single_hand_landmarks[8]
+                    thumb_tip = single_hand_landmarks[4]
+                    middle_tip = single_hand_landmarks[12]
+                    ring_tip = single_hand_landmarks[16]
 
-                #cv2.putText(frame, str(mid_ring_dist), find_origin(frame, mid_joint), font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+                    mid_joint = single_hand_landmarks[11]
+                    ring_joint = single_hand_landmarks[15]
+                    #define needed joint names...
 
+                    #tip_array = [pointer_tip, thumb_tip, middle_tip, ring_tip]
+
+                    cv2.line(frame, find_origin(frame, mid_joint), find_origin(frame, ring_joint), (0, 255, 0), 2) #spock line
+                    cv2.line(frame, find_origin(frame, pointer_tip), find_origin(frame, thumb_tip), (0, 255, 0), 2) #pointer -> thumb line 
+
+                    #cv2.putText(frame, str(mid_ring_dist), find_origin(frame, mid_joint), font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+
+                    current_pose = "-"
+
+
+                    """
+
+                    spockStatus = is_spock(single_hand_landmarks)
+                    lizardStatus = is_lizard(single_hand_landmarks)
+                    
+                    Debug Text, uncomment to display some values 
+
+                    cv2.putText(frame, f"spock: {spockStatus}", (0,100), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                    cv2.putText(frame, f"lizard: {lizardStatus}", (0,150), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
                 
-
-
-                current_pose = "-"
-
-
-                """
-
-                spockStatus = is_spock(single_hand_landmarks)
-                lizardStatus = is_lizard(single_hand_landmarks)
-                
-                Debug Text, uncomment to display some values 
-
-                cv2.putText(frame, f"spock: {spockStatus}", (0,100), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-                cv2.putText(frame, f"lizard: {lizardStatus}", (0,150), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-               
-                cv2.putText(frame, str(finger_status_array), (0,200), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-
-                
-                #cv2.putText(frame, f"thumb pointer dist: {thumb_pointer_dist}", (0,125), font, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
-                #cv2.putText(frame, f"mid ring dist: {mid_ring_dist}", (0,175), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-
-                """
-
-
-
-
-                if is_lizard(single_hand_landmarks):
-                    current_pose = "lizard"
-                elif is_scissors(single_hand_landmarks):
-                    current_pose = "scissors"
-                elif is_spock(single_hand_landmarks):
-                    current_pose = "spock"
-                elif is_paper(single_hand_landmarks):
-                    current_pose = "paper"
-                elif is_rock(single_hand_landmarks):
-                    current_pose = "rock"
-                else:
-                    current_pose = "unknown"
-
-                #run through possible poses, set the current pose
+                    cv2.putText(frame, str(finger_status_array), (0,200), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
 
                     
+                    #cv2.putText(frame, f"thumb pointer dist: {thumb_pointer_dist}", (0,125), font, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
+                    #cv2.putText(frame, f"mid ring dist: {mid_ring_dist}", (0,175), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
 
-                if last_pose == current_pose: 
-                    #if no change in pose, add to pose timer
-                    status = "Hold that pose!"
-                    timer_value = current_time - timer_start 
-                    if timer_value > POSE_TIMER_VALUE:
-                        verified_pose = current_pose
-                else: 
-                    #pose changed, clear and make a new timer
-                    verified_pose = ""
-                    timer_value = 0
-                    status = "Pick a pose..."
-                    timer_start = current_time
-
-                last_pose = current_pose
-
-                
-                cv2.putText(frame, f"Detected Pose: {current_pose}", (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                cv2.putText(frame, status, (0,75), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                
-    else:
-        timer_value = 0
-
-    
-    cv2.putText(frame, f"verified_pose: {verified_pose}", (0,175), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-    #cv2.putText(frame, str(current_time - start_time), (0,100), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-    cv2.putText(frame, str(f"{timer_value:.2f}"), (0,150), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-    cv2.imshow("Rock, Paper, Scissors, Lizard, Spock", frame)
-
-    
+                    """
 
 
-    
+                    if is_lizard(single_hand_landmarks):
+                        current_pose = "lizard"
+                    elif is_scissors(single_hand_landmarks):
+                        current_pose = "scissors"
+                    elif is_spock(single_hand_landmarks):
+                        current_pose = "spock"
+                    elif is_paper(single_hand_landmarks):
+                        current_pose = "paper"
+                    elif is_rock(single_hand_landmarks):
+                        current_pose = "rock"
+                    else:
+                        current_pose = "unknown"
+
+                    #run through possible poses, set the current pose
+
+                        
+
+                    if last_pose == current_pose: 
+                        #if no change in pose, add to pose timer
+                        if not round_played:
+                            status = "Hold that pose!"
+                            timer_value = current_time - timer_start 
+
+                            if timer_value > POSE_TIMER_VALUE: #ie, player has held pose for long enough to play it
+                                verified_pose = current_pose
+                                user = verified_pose
 
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-    user_choice = verified_pose
-
-
-cpu = computer_choice()
-user = verified_pose
-print(f"CPU: {cpu}")
-print(f"User: {user}")
-verdict = double_check(user, cpu)
-print(verdict)
+                                cpu = computer_choice()
+                                
+                                print(f"CPU: {cpu}")
+                                print(f"User: {user}")
+                                verdict = find_reason(user, cpu)
+                                winner = double_check(user, cpu)
+                                print(verdict)
 
 
-#cleanup 
-cap.release()
-cv2.destroyAllWindows()
-print("end")
+                                round_played = True        # lock: don't fire again
+                                status = "Change pose to play again"
+                        else:
+                            cv2.putText(frame, f"CPU: {cpu}", (0,225), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                            cv2.putText(frame, f"User: {user}", (0,250), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                            cv2.putText(frame, f"{verdict}", (0,275), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                            cv2.putText(frame, f"{winner} wins!", (0,300), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
 
 
-"""
-- on status change 
-- end any existing timer
-- start 3 sec timer 
-- if timer passes with no break, update verified pose var 
-"""
+                        
+                    else: 
+                        #pose changed, clear and make a new timer
+                        verified_pose = ""
+                        timer_value = 0
+                        status = "Pick a pose..."
+                        timer_start = current_time
+                        round_played = False 
+
+                    last_pose = current_pose
+
+                    
+                    cv2.putText(frame, f"Detected Pose: {current_pose}", (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                    cv2.putText(frame, status, (0,75), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                    
+        else:
+            timer_value = 0
+
+       
+
+        
+        cv2.putText(frame, f"verified_pose: {verified_pose}", (0,175), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+        #cv2.putText(frame, str(current_time - start_time), (0,100), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+        cv2.putText(frame, str(f"{timer_value:.2f}"), (0,150), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+
+        
+
+
+
+        cv2.imshow("Rock, Paper, Scissors, Lizard, Spock", frame)
+
+        
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+        user_choice = verified_pose
+
+
+  
+
+
+    #cleanup 
+    cap.release()
+    cv2.destroyAllWindows()
+    print("end")
+
+
+# This provided line is required at the end of a Python file
+# to call the main() function.
+if __name__ == '__main__':
+    main()
+
+
+
+
+
 
 
 
