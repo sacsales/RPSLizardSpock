@@ -3,6 +3,12 @@ import cv2
 import mediapipe as mp
 from mediapipe.tasks import python 
 from mediapipe.tasks.python import vision
+import time
+
+
+start_time = time.time()
+timer_value = 0
+last_pose = None 
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -185,8 +191,8 @@ def is_scissors(single_hand_landmarks):
 
 
     
-
 while cap.isOpened():
+
     success, frame = cap.read()
     if not success:
         continue
@@ -201,13 +207,14 @@ while cap.isOpened():
     # detect hand landmarks from the input image
     result = detector.detect(mp_image)
 
+    current_time = time.time()
+
     if result.hand_landmarks: #landmarks detected??
          for single_hand_landmarks in result.hand_landmarks:  #result.hand_landmarks is different positions of hand.
                 draw_hand(frame, single_hand_landmarks) #single_hand_landmarks refers to an array of all the different joints in 1 hand pos...
 
 
                 finger_status_array = get_finger_array(single_hand_landmarks)
-
 
 
                 pointer_tip = single_hand_landmarks[8]
@@ -218,7 +225,6 @@ while cap.isOpened():
                 mid_joint = single_hand_landmarks[11]
                 ring_joint = single_hand_landmarks[15]
                 #define needed joint names...
-                
 
                 #tip_array = [pointer_tip, thumb_tip, middle_tip, ring_tip]
 
@@ -234,12 +240,8 @@ while cap.isOpened():
 
                 
 
-                
 
-                
-               
-
-                regular_pose_text = "aaa"
+                current_pose = "-"
 
 
                 """
@@ -261,43 +263,48 @@ while cap.isOpened():
                 """
 
 
-                if is_lizard(single_hand_landmarks):
-                    regular_pose_text = "lizard"
-                elif is_scissors(single_hand_landmarks):
-                    regular_pose_text = "scissors"
-                elif is_spock(single_hand_landmarks):
-                    regular_pose_text = "spock"
-                elif is_paper(single_hand_landmarks):
-                    regular_pose_text = "paper"
-                elif is_rock(single_hand_landmarks):
-                    regular_pose_text = "rock"
-                else:
-                    regular_pose_text = "unknown"
 
-                cv2.putText(frame, regular_pose_text, (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+
+                if is_lizard(single_hand_landmarks):
+                    current_pose = "lizard"
+                elif is_scissors(single_hand_landmarks):
+                    current_pose = "scissors"
+                elif is_spock(single_hand_landmarks):
+                    current_pose = "spock"
+                elif is_paper(single_hand_landmarks):
+                    current_pose = "paper"
+                elif is_rock(single_hand_landmarks):
+                    current_pose = "rock"
+                else:
+                    current_pose = "unknown"
+
                     
 
+                if last_pose == current_pose:
+                    status = "being held"
+                    timer_value = current_time - timer_start
+                else:
+                    timer_value = 0
+                    status = "changed"
+                    timer_start = current_time
+
+
+
+
+                print(status)
+                last_pose = current_pose
+
+                
                 
 
-
-
-
-
-
-
-
-
-
-
+                cv2.putText(frame, current_pose, (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.putText(frame, status, (0,75), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
                 
-
-
-
-
-
-     
-
+                    
+    cv2.putText(frame, str(current_time - start_time), (0,100), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+    cv2.putText(frame, str(f"{timer_value:.2f}"), (0,150), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
     cv2.imshow("window", frame)
+
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
@@ -306,6 +313,14 @@ while cap.isOpened():
 cap.release()
 cv2.destroyAllWindows()
 print("end")
+
+
+"""
+- on status change 
+- end any existing timer
+- start 3 sec timer 
+- if timer passes with no break, update verified pose var 
+"""
 
 
 
