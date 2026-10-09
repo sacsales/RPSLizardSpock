@@ -1,5 +1,5 @@
 
-**Signal Checks**
+**Hand Pose Checks**
 
 Rock 
 - all fingers down 
