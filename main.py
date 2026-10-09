@@ -19,12 +19,12 @@ detector = vision.HandLandmarker.create_from_options(options)
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 600)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 500)
-#setup webcam/window frame
+#setup webcam/window frame...
 
 #for the skeleton - which hand landmarks map to which? 
 HAND_CONNECTIONS = [
     (0, 1), (1, 2), (2, 3), (3, 4),         # thumb
-    (0, 5), (5, 6), (6, 7), (7, 8),         # index
+    (0, 5), (5, 6), (6, 7), (7, 8),         # pointer
     (5, 9), (9, 10), (10, 11), (11, 12),    # middle
     (9, 13), (13, 14), (14, 15), (15, 16),  # ring
     (13, 17), (17, 18), (18, 19), (19, 20), # pinky
@@ -32,10 +32,16 @@ HAND_CONNECTIONS = [
 ]
 
 
+SPOCK_MID_RING_THRESHOLD = 0.09
+SPOCK_THUMB_POINTER_THRESHOLD = 0.20
+LIZARD_THUMB_POINTER_THRESHOLD = 0.10
+LIZARD_MID_RING_THRESHOLD = 0.05
+
+
+
 def dist(a, b):
     return math.hypot(a.x - b.x, a.y - b.y)
 #find distance between 2 joint points
-
 
 
 def find_origin(frame, landmark):
@@ -74,10 +80,101 @@ def finger_up(name, finger_tip, finger_mid):
         status = "down"
 
     return status 
-#check if a finger is fully extended. is tip closer to wrist (up), or is tip closer to wrist (c?
+
 #open: if tip->wrist greater than mid->wrist
 
+def get_finger_array(single_hand_landmarks): #returns array of four fingers and if they're up/down
+    finger_array = [
+        ["pointer", 7, 6],
+        ["middle", 11, 10],
+        ["ring", 15, 14],
+        ["pinky", 19, 18],
+    ]
+    #finger name, tip, and middle joint
 
+    finger_status_array = [None, None, None, None]
+
+
+    for i in range(len(finger_array)):
+        finger = finger_array[i]
+        name = finger[0]
+        tip = single_hand_landmarks[finger[1]]
+        mid = single_hand_landmarks[finger[2]]
+        status = finger_up(name, tip, mid)
+
+        #h, w = frame.shape[:2]
+        #origin = (int(tip.x * w), int (tip.y * h))
+        finger_status_array[i] = status
+
+        #cv2.putText(frame, f"{name}: {status} ", origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+
+    return finger_status_array
+
+
+def is_spock(single_hand_landmarks):
+
+    pointer_tip = single_hand_landmarks[8]
+    thumb_tip = single_hand_landmarks[4]
+
+    mid_joint = single_hand_landmarks[11]
+    ring_joint = single_hand_landmarks[15]
+
+    
+    thumb_pointer_dist = dist(pointer_tip, thumb_tip)
+    mid_ring_dist = dist(mid_joint, ring_joint)
+
+    if mid_ring_dist > SPOCK_MID_RING_THRESHOLD and thumb_pointer_dist > SPOCK_THUMB_POINTER_THRESHOLD:
+        spockStatus = True
+    else:
+        spockStatus = False
+
+
+    return spockStatus
+
+
+def is_lizard(single_hand_landmarks):
+
+    pointer_tip = single_hand_landmarks[8]
+    thumb_tip = single_hand_landmarks[4]
+
+    mid_joint = single_hand_landmarks[11]
+    ring_joint = single_hand_landmarks[15]
+
+
+    thumb_pointer_dist = dist(pointer_tip, thumb_tip)
+    mid_ring_dist = dist(mid_joint, ring_joint)
+
+    if thumb_pointer_dist > LIZARD_THUMB_POINTER_THRESHOLD and  mid_ring_dist < LIZARD_MID_RING_THRESHOLD:
+        lizardStatus = True
+    else:
+        lizardStatus = False
+
+    return lizardStatus
+
+
+def is_rock(single_hand_landmarks):
+    finger_status_array = get_finger_array(single_hand_landmarks)
+
+    if finger_status_array == ["down", "down", "down", "down"]:
+        return True
+    return False
+
+def is_paper(single_hand_landmarks):
+    finger_status_array = get_finger_array(single_hand_landmarks)
+
+    if finger_status_array == ["up", "up", "up", "up"]:
+        return True
+    return False
+
+def is_scissors(single_hand_landmarks):
+    finger_status_array = get_finger_array(single_hand_landmarks)
+
+    if finger_status_array == ['up', 'up', 'down', 'down']:
+        return True
+    return False
+
+
+    
 
 while cap.isOpened():
     success, frame = cap.read()
@@ -98,29 +195,8 @@ while cap.isOpened():
          for single_hand_landmarks in result.hand_landmarks:  #result.hand_landmarks is different positions of hand.
                 draw_hand(frame, single_hand_landmarks) #single_hand_landmarks refers to an array of all the different joints in 1 hand pos...
 
-                finger_array = [
-                    ["pointer", 7, 6],
-                    ["middle", 11, 10],
-                    ["ring", 15, 14],
-                    ["pinky", 19, 18],
-                ]
-                #finger name, tip, and middle joint
 
-                finger_status_array = [None, None, None, None]
-
-                
-                for i in range(len(finger_array)):
-                    finger = finger_array[i]
-                    name = finger[0]
-                    tip = single_hand_landmarks[finger[1]]
-                    mid = single_hand_landmarks[finger[2]]
-                    status = finger_up(name, tip, mid)
-
-                    h, w = frame.shape[:2]
-                    origin = (int(tip.x * w), int (tip.y * h))
-                    finger_status_array[i] = status
-
-                    #cv2.putText(frame, f"{name}: {status} ", origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+                finger_status_array = get_finger_array(single_hand_landmarks)
 
 
 
@@ -129,66 +205,52 @@ while cap.isOpened():
                 middle_tip = single_hand_landmarks[12]
                 ring_tip = single_hand_landmarks[16]
 
+                mid_joint = single_hand_landmarks[11]
+                ring_joint = single_hand_landmarks[15]
+                #define needed joint names...
+                
+
                 #tip_array = [pointer_tip, thumb_tip, middle_tip, ring_tip]
 
 
 
-                pointerOrigin = (int(pointer_tip.x * w), int (pointer_tip.y * h))
-                thumbOrigin = (int(thumb_tip.x * w), int (thumb_tip.y * h))
-
-                mid_joint = single_hand_landmarks[11]
-                ring_joint = single_hand_landmarks[15]
+                cv2.line(frame, find_origin(frame, mid_joint), find_origin(frame, ring_joint), (0, 255, 0), 2) #spock line
+                cv2.line(frame, find_origin(frame, pointer_tip), find_origin(frame, thumb_tip), (0, 255, 0), 2) #pointer -> thumb line 
 
 
-                cv2.line(frame, find_origin(frame, mid_joint), find_origin(frame, ring_joint), (0, 255, 0), 2)
-
-
-                cv2.line(frame, pointerOrigin, thumbOrigin, (0, 255, 0), 2)
-                thumb_pointer_dist = dist(pointer_tip, thumb_tip)
-                mid_ring_dist = dist(mid_joint, ring_joint)
                
 
                 #cv2.putText(frame, str(mid_ring_dist), find_origin(frame, mid_joint), font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
 
-                SPOCK_MID_RING_THRESHOLD = 0.09
-                SPOCK_THUMB_POINTER_THRESHOLD = 0.20
-                LIZARD_THUMB_POINTER_THRESHOLD = 0.10
-                LIZARD_MID_RING_THRESHOLD = 0.05
-
+                
 
                 
 
-                if mid_ring_dist > SPOCK_MID_RING_THRESHOLD and thumb_pointer_dist > SPOCK_THUMB_POINTER_THRESHOLD:
-                    spockStatus = "spock"
-                else:
-                    spockStatus = "not spock"
+                spockStatus = is_spock(single_hand_landmarks)
+                lizardStatus = is_lizard(single_hand_landmarks)
 
-
-                if thumb_pointer_dist > LIZARD_THUMB_POINTER_THRESHOLD and  mid_ring_dist < LIZARD_MID_RING_THRESHOLD:
-                    lizardStatus = "lizard"
-                else:
-                    lizardStatus = "not lizard"
+               
 
                 regular_pose_text = "aaa"
 
             
 
-                cv2.putText(frame, spockStatus, (0,100), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-                cv2.putText(frame, f"thumb pointer dist: {thumb_pointer_dist}", (0,125), font, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
-                cv2.putText(frame, lizardStatus, (0,150), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-                cv2.putText(frame, f"mid ring dist: {mid_ring_dist}", (0,175), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.putText(frame, f"spock: {spockStatus}", (0,100), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.putText(frame, f"lizard: {lizardStatus}", (0,150), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+               
                 cv2.putText(frame, str(finger_status_array), (0,200), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
 
-                
-                print(finger_status_array)
+                #display some stuff for debugging 
 
+                #cv2.putText(frame, f"thumb pointer dist: {thumb_pointer_dist}", (0,125), font, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
+                #cv2.putText(frame, f"mid ring dist: {mid_ring_dist}", (0,175), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+        
 
-
-                if finger_status_array == ['up', 'up', 'down', 'down']:
-                    regular_pose_text = "peace"
-                elif finger_status_array == ["up", "up", "up", "up"]:
+                if is_scissors(single_hand_landmarks):
+                    regular_pose_text = "scissors"
+                elif is_paper(single_hand_landmarks):
                     regular_pose_text = "paper"
-                elif finger_status_array == ["down", "down", "down", "down"]:
+                elif is_rock(single_hand_landmarks):
                     regular_pose_text = "rock"
 
                 cv2.putText(frame, regular_pose_text, (0,50), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
