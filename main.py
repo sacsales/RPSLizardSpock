@@ -63,18 +63,19 @@ def draw_hand(frame, landmarks):
  
 
 def finger_up(name, finger_tip, finger_mid):
-    wrist = single_hand_landmarks[5]
+    wrist = single_hand_landmarks[0]
 
-    tip_to_mid = dist(finger_tip, finger_mid)
     tip_to_base = dist(finger_tip, wrist)
+    mid_to_base = dist(finger_mid, wrist)
 
-    if tip_to_base > tip_to_mid:
+    if tip_to_base > mid_to_base:
         status = "up"
     else:
         status = "down"
 
     return status 
-#check if a finger is fully extended. is distance between 
+#check if a finger is fully extended. is tip closer to wrist (up), or is tip closer to wrist (c?
+#open: if tip->wrist greater than mid->wrist
 
 
 
@@ -98,14 +99,18 @@ while cap.isOpened():
                 draw_hand(frame, single_hand_landmarks) #single_hand_landmarks refers to an array of all the different joints in 1 hand pos...
 
                 finger_array = [
-                    ["pointer", 8, 6],
-                    ["middle", 12, 10],
-                    ["ring", 16, 14],
-                    ["pinky", 20, 18],
+                    ["pointer", 7, 6],
+                    ["middle", 11, 10],
+                    ["ring", 15, 14],
+                    ["pinky", 19, 18],
                 ]
                 #finger name, tip, and middle joint
 
-                for finger in finger_array:
+                finger_status_array = [None, None, None, None]
+
+                
+                for i in range(len(finger_array)):
+                    finger = finger_array[i]
                     name = finger[0]
                     tip = single_hand_landmarks[finger[1]]
                     mid = single_hand_landmarks[finger[2]]
@@ -113,7 +118,10 @@ while cap.isOpened():
 
                     h, w = frame.shape[:2]
                     origin = (int(tip.x * w), int (tip.y * h))
+                    finger_status_array[i] = status
+
                     #cv2.putText(frame, f"{name}: {status} ", origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+
 
 
                 pointer_tip = single_hand_landmarks[8]
@@ -121,7 +129,8 @@ while cap.isOpened():
                 middle_tip = single_hand_landmarks[12]
                 ring_tip = single_hand_landmarks[16]
 
-                tip_array = [pointer_tip, thumb_tip, middle_tip, ring_tip]
+                #tip_array = [pointer_tip, thumb_tip, middle_tip, ring_tip]
+
 
 
                 pointerOrigin = (int(pointer_tip.x * w), int (pointer_tip.y * h))
@@ -146,6 +155,9 @@ while cap.isOpened():
                 LIZARD_THUMB_POINTER_THRESHOLD = 0.10
                 LIZARD_MID_RING_THRESHOLD = 0.05
 
+
+                
+
                 if mid_ring_dist > SPOCK_MID_RING_THRESHOLD and thumb_pointer_dist > SPOCK_THUMB_POINTER_THRESHOLD:
                     spockStatus = "spock"
                 else:
@@ -157,15 +169,30 @@ while cap.isOpened():
                 else:
                     lizardStatus = "not lizard"
 
-                
+                regular_pose_text = "aaa"
+
+            
+
+                cv2.putText(frame, spockStatus, (0,100), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.putText(frame, f"thumb pointer dist: {thumb_pointer_dist}", (0,125), font, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
+                cv2.putText(frame, lizardStatus, (0,150), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.putText(frame, f"mid ring dist: {mid_ring_dist}", (0,175), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.putText(frame, str(finger_status_array), (0,200), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
 
                 
+                print(finger_status_array)
 
 
-                cv2.putText(frame, spockStatus, (100,100), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-                cv2.putText(frame, f"thumb pointer dist: {thumb_pointer_dist}", (100,150), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-                cv2.putText(frame, lizardStatus, (100,200), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-                cv2.putText(frame, f"mid ring dist: {mid_ring_dist}", (100,250), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+
+                if finger_status_array == ['up', 'up', 'down', 'down']:
+                    regular_pose_text = "peace"
+                elif finger_status_array == ["up", "up", "up", "up"]:
+                    regular_pose_text = "paper"
+                elif finger_status_array == ["down", "down", "down", "down"]:
+                    regular_pose_text = "rock"
+
+                cv2.putText(frame, regular_pose_text, (0,50), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                    
 
                 
 
