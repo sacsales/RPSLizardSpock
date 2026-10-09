@@ -37,13 +37,7 @@ def finger_extended(lm, tip, pip):
     return dist(lm[0], lm[tip]) > dist(lm[0], lm[pip])
 
 
-# 2. Define text properties
-text = "Hello, OpenCV!"
-coordinates = (50, 100)  # (X, Y) position of the bottom-left corner of the text
-font = cv2.FONT_HERSHEY_SIMPLEX  # Font type
-font_scale = 1.0  # Font size multiplier
-color = (0, 255, 0)  # Green color in BGR format
-thickness = 2  # Thickness of the lines in pixels
+
 
 
 def draw_hand(frame, landmarks):
@@ -58,13 +52,12 @@ def draw_hand(frame, landmarks):
     for p in points:
         cv2.circle(frame, p, 4, (0, 0, 255), -1)
         origin = (p[0] + 6, p[1] + 4)
-        #cv2.putText(frame, str(p), origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+        #cv2.putText(frame, str(p), origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA) to label coords 
     
 
  #draw hand landmark points 
 
 def finger_up(name, finger_tip, finger_mid):
-    
     wrist = single_hand_landmarks[5]
 
     tip_to_mid = dist(finger_tip, finger_mid)
@@ -96,7 +89,7 @@ while cap.isOpened():
 
     if result.hand_landmarks:
          for single_hand_landmarks in result.hand_landmarks:  #result.hand_landmarks is different positions of hand.
-                draw_hand(frame, single_hand_landmarks) #single_hand_landmarks refers to the different joints in 1 hand pos...
+                draw_hand(frame, single_hand_landmarks) #single_hand_landmarks refers to an array of all the different joints in 1 hand pos...
 
                 finger_array = [
                     ["pointer", 8, 6],
@@ -104,8 +97,8 @@ while cap.isOpened():
                     ["ring", 16, 14],
                     ["pinky", 20, 18],
                 ]
-                #finger names, tip, and middle joint
 
+                #finger name, tip, and middle joint
 
                 for finger in finger_array:
                     name = finger[0]
@@ -114,12 +107,18 @@ while cap.isOpened():
                     status = finger_up(name, tip, mid)
 
                     h, w = frame.shape[:2]
-                    
                     origin = (int(tip.x * w), int (tip.y * h))
-                    
-                    
-
                     cv2.putText(frame, f"{name}: {status} ", origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+
+                 
+
+
+
+
+
+
+
+
 
 
 
