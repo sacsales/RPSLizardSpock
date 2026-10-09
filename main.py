@@ -4,12 +4,18 @@ import mediapipe as mp
 from mediapipe.tasks import python 
 from mediapipe.tasks.python import vision
 import time
+import random
+
+RANDOM_MIN = 0
+RANDOM_MAX = 3
 
 
 start_time = time.time()
 timer_value = 0
 last_pose = None 
 verified_pose = None 
+
+round = 0 
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -50,11 +56,9 @@ def dist(a, b):
     return math.hypot(a.x - b.x, a.y - b.y)
 #find distance between 2 joint points
 
-
 def find_origin(frame, landmark):
     h, w = frame.shape[:2]
     return int(landmark.x * w), int (landmark.y * h)
-
 
 
 def draw_hand(frame, landmarks):
@@ -72,7 +76,6 @@ def draw_hand(frame, landmarks):
         #cv2.putText(frame, str(p), origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA) to label coords 
         #red dots on the joints
     
-
  
 
 def finger_up(name, finger_tip, finger_mid):
@@ -191,6 +194,141 @@ def is_scissors(single_hand_landmarks):
     return False
 
 
+
+
+def fight(p1, p2):
+    """
+    This function makes a one-way comparison of the moves of the first against the second player
+    and assigns and returns the result if the combination is found:
+    ie, "Scissors cuts paper..."
+
+    Parameters:
+        * p1 (string): player 1's move
+        * p2 (string): player 2's move
+
+    Return:
+        * result (string): The 'ruling' of the comparisons of the different moves. Empty string if
+        specific combination is not found.
+    """
+    result = ""
+    if p1 == p2:
+        result = "Draw"
+    elif (p1 == "scissors") and (p2 == "paper"):
+        result = "Scissors cuts paper..."
+    elif (p1 == "paper") and (p2 == "rock"):
+        result = "paper covers Rock"
+    elif (p1 == "rock") and (p2 == "lizard"):
+        result = "Rock crushes Lizard..."
+    elif (p1 == "lizard") and (p2 == "spock"):
+        result = "Lizard poisons Spock..."
+    elif (p1 == "spock") and (p2 == "scissors"):
+        result = "Spock smashes Scissors..."
+    elif (p1 == "scissors") and (p2 == "lizard"):
+        result = "Scissors decapitate Lizard..."
+    elif (p1 == "lizard") and (p2 == "paper"):
+        result = "Lizard eats Paper..."
+    elif (p1 == "paper") and (p2 == "spock"):
+        result = "Paper disproves Spock..."
+    elif (p1 == "spock") and (p2 == "rock"):
+        result = "Spock vaporizes Rock..."
+    elif (p1 == "rock") and (p2 == "scissors"):
+        result = "(and as it always has) Rock crushes Scissors!"
+
+    return result
+
+
+
+def double_check(p1, p2):
+    """
+    If the first 'pass' of comparison returned an empty string (no move combination matches),
+    this function does the comparison again, but with the order reversed:
+    ie, compares second player's move to the first player's.
+
+    Parameters:
+        * p1 (string): player 1's move
+        * p2 (string): player 2's move
+
+    Return:
+        * winner (string): returns which player won this round - or draw, if applicable.
+    """
+    winner = ""
+
+    if fight(p1, p2) == "Draw":
+        winner = "Draw! No points awarded."
+    elif fight(p1,p2) != "":
+        print(fight(p1, p2))
+        winner = "User"
+    else: #switch
+        print(fight(p2, p1))
+        winner = "CPU"
+    return winner
+
+
+def translate_choice(choice):
+    """
+    This function 'translates' an integer into the corresponding move.
+
+    Parameters:
+        * choice (integer) from 0-4, denoting a specific move
+    Return:
+        * translated (string) of the actual name of the move: ie, paper, or scissors.
+    """
+    translated = ""
+    if choice == 0:
+        translated = "rock"
+    elif choice == 1:
+        translated = "paper"
+    elif choice == 2:
+        translated = "scissors"
+    elif choice == 3:
+        translated = "lizard"
+    elif choice == 4:
+        translated = "spock"
+
+    return translated
+
+
+def user_choice(user_choice):
+    """
+    This function gets an integer input from the user, translates it, and returns that value.
+    Parameters: None
+    Return:
+        * user_choice (string): The name of the move the user has chosen to go with that round.
+    """
+    #user_choice = int(input("Type 0 for Rock, 1 for Paper, 2 for Scissors, 3 for Lizard, 4 for Spock: "))
+    user_choice = translate_choice(user_choice)
+    return user_choice
+
+
+def computer_choice():
+    """
+    This function generates the computer's move in that round, by generating a random number from 0-4 and translating
+    it to the move it corresponds with.
+
+    Parameters: None
+    Return: cpu_choice (string): the computer's move that turn
+    """
+    cpu_choice = random.randint(RANDOM_MIN, RANDOM_MAX)
+    cpu_choice = translate_choice(cpu_choice)
+    return cpu_choice
+
+
+
+def round():
+    """
+    This function simulates 1 round of the game, by getting the user's move, generating the computers move and returning
+    the winner.
+
+    Return:
+        * verdict (string): who has won the round, or if there was a draw
+    """
+    user = user_choice()
+    cpu = computer_choice(verified_pose)
+    print(f"CPU: {cpu}")
+    print(f"User: {user}")
+    verdict = double_check(user, cpu)
+    return verdict
+
     
 while cap.isOpened():
 
@@ -296,11 +434,9 @@ while cap.isOpened():
                     status = "Pick a pose..."
                     timer_start = current_time
 
-                
                 last_pose = current_pose
 
                 
-        
                 cv2.putText(frame, f"Detected Pose: {current_pose}", (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
                 cv2.putText(frame, status, (0,75), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
                 
@@ -313,9 +449,25 @@ while cap.isOpened():
     cv2.putText(frame, str(f"{timer_value:.2f}"), (0,150), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
     cv2.imshow("Rock, Paper, Scissors, Lizard, Spock", frame)
 
+    
+
+
+    
+
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
+    user_choice = verified_pose
+
+
+cpu = computer_choice()
+user = verified_pose
+print(f"CPU: {cpu}")
+print(f"User: {user}")
+verdict = double_check(user, cpu)
+print(verdict)
+
 
 #cleanup 
 cap.release()
