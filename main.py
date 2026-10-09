@@ -9,6 +9,7 @@ import time
 start_time = time.time()
 timer_value = 0
 last_pose = None 
+verified_pose = None 
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -43,7 +44,7 @@ SPOCK_THUMB_POINTER_THRESHOLD = 0.20
 LIZARD_THUMB_POINTER_THRESHOLD = 0.10
 LIZARD_MID_RING_THRESHOLD = 0.05
 
-
+POSE_TIMER_VALUE = 2.0
 
 def dist(a, b):
     return math.hypot(a.x - b.x, a.y - b.y)
@@ -278,32 +279,39 @@ while cap.isOpened():
                 else:
                     current_pose = "unknown"
 
+                #run through possible poses, set the current pose
+
                     
 
-                if last_pose == current_pose:
-                    status = "being held"
-                    timer_value = current_time - timer_start
-                else:
+                if last_pose == current_pose: 
+                    #if no change in pose, add to pose timer
+                    status = "Hold that pose!"
+                    timer_value = current_time - timer_start 
+                    if timer_value > POSE_TIMER_VALUE:
+                        verified_pose = current_pose
+                else: 
+                    #pose changed, clear and make a new timer
+                    verified_pose = ""
                     timer_value = 0
-                    status = "changed"
+                    status = "Pick a pose..."
                     timer_start = current_time
 
-
-
-
-                print(status)
+                
                 last_pose = current_pose
 
                 
-                
-
-                cv2.putText(frame, current_pose, (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+        
+                cv2.putText(frame, f"Detected Pose: {current_pose}", (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
                 cv2.putText(frame, status, (0,75), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
                 
-                    
-    cv2.putText(frame, str(current_time - start_time), (0,100), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+    else:
+        timer_value = 0
+
+    
+    cv2.putText(frame, f"verified_pose: {verified_pose}", (0,175), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+    #cv2.putText(frame, str(current_time - start_time), (0,100), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
     cv2.putText(frame, str(f"{timer_value:.2f}"), (0,150), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-    cv2.imshow("window", frame)
+    cv2.imshow("Rock, Paper, Scissors, Lizard, Spock", frame)
 
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
