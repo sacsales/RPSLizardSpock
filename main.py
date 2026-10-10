@@ -62,6 +62,8 @@ def find_origin(frame, landmark):
     h, w = frame.shape[:2]
     return int(landmark.x * w), int (landmark.y * h)
 
+
+#functions that deal with drawings...
 def draw_hand(frame, landmarks):
 
     h, w = frame.shape[:2]
@@ -96,6 +98,9 @@ def draw_text(img, text,
 
     return text_size
 
+
+
+#hand pose checks 
 
 def finger_up(single_hand_landmarks, finger_tip, finger_mid):
     #open: if tip->wrist greater than mid->wrist
@@ -209,6 +214,8 @@ def is_scissors(single_hand_landmarks):
         return True
     return False
 
+
+#actual game logic stuff....
 def fight(p1, p2):
     """
     This function makes a one-way comparison of the moves of the first against the second player
@@ -229,7 +236,7 @@ def fight(p1, p2):
     elif (p1 == "scissors") and (p2 == "paper"):
         result = "Scissors cuts paper..."
     elif (p1 == "paper") and (p2 == "rock"):
-        result = "paper covers Rock"
+        result = "Paper covers Rock..."
     elif (p1 == "rock") and (p2 == "lizard"):
         result = "Rock crushes Lizard..."
     elif (p1 == "lizard") and (p2 == "spock"):
@@ -265,7 +272,7 @@ def double_check(p1, p2):
     winner = ""
 
     if fight(p1, p2) == "Draw":
-        winner = "Draw! No points awarded."
+        winner = "No one"
     elif fight(p1,p2) != "":
         print(fight(p1, p2))
         winner = "User"
@@ -323,10 +330,15 @@ def computer_choice():
 
 def main(): 
 
+    status = ""
+
     timer_value = 0
     last_pose = None 
     verified_pose = None
     round_played = False 
+
+    user_points = 0 
+    cpu_points = 0 
 
     red = (0,0,255)
     blue = (255,0,0)
@@ -372,7 +384,7 @@ def main():
 
                     cv2.rectangle(frame, (x_min - 15, y_min - 15), (x_max + 15, y_max + 15), box_colour, 2) #hand box 
                     cv2.rectangle(frame, (x_min - 15, y_min - 15), (x_min + 100, y_min - 40), box_colour, -1) #detected label text bg
-                    
+                    #making the hand box
                     
                     
                     
@@ -388,29 +400,8 @@ def main():
                     cv2.line(frame, find_origin(frame, mid_joint), find_origin(frame, ring_joint), (0, 255, 0), 2) #spock line
                     cv2.line(frame, find_origin(frame, pointer_tip), find_origin(frame, thumb_tip), (0, 255, 0), 2) #pointer -> thumb line 
 
-                    #cv2.putText(frame, str(mid_ring_dist), find_origin(frame, mid_joint), font, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
-
+                   
                     current_pose = "-"
-
-
-                    """
-
-                    spockStatus = is_spock(single_hand_landmarks)
-                    lizardStatus = is_lizard(single_hand_landmarks)
-                    
-                    Debug Text, uncomment to display some values 
-
-                    cv2.putText(frame, f"spock: {spockStatus}", (0,100), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-                    cv2.putText(frame, f"lizard: {lizardStatus}", (0,150), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-                
-                    cv2.putText(frame, str(finger_status_array), (0,200), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-
-                    
-                    #cv2.putText(frame, f"thumb pointer dist: {thumb_pointer_dist}", (0,125), font, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
-                    #cv2.putText(frame, f"mid ring dist: {mid_ring_dist}", (0,175), font, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
-
-                    """
-
 
                     if is_lizard(single_hand_landmarks):
                         current_pose = "lizard"
@@ -426,13 +417,13 @@ def main():
                         current_pose = "unknown"
 
                     label = f"detecting: {current_pose}"
-
                     #run through possible poses, set the current pose
 
                     
 
                     if last_pose == current_pose: 
                         #if no change in pose, add to pose timer
+
                         if not round_played:
                             status = "Hold that pose!"
                             timer_value = current_time - timer_start 
@@ -447,7 +438,15 @@ def main():
                                 cpu = computer_choice()
                                 
                                 verdict = find_reason(user, cpu)
+
+
                                 winner = double_check(user, cpu)
+                                if winner == "User":
+                                    user_points += 1 
+                                elif winner == "CPU":
+                                    cpu_points += 1 
+                                
+                                
                                 
                                 round_played = True   #'pause' for this round, don't run game logic again for a bit 
                                 status = "Change pose to play again"
@@ -458,8 +457,8 @@ def main():
 
                             draw_text(frame, f"CPU: {cpu}", font_scale=0.7, pos=(0, 300), text_color_bg=(255, 0, 0))
                             draw_text(frame, f"User: {user}", font_scale=0.7, pos=(0, 325), text_color_bg=(255, 0, 0))
-                            draw_text(frame, f"{verdict}", font_scale=0.7, pos=(0, 350), text_color_bg=(255, 0, 0))
-                            draw_text(frame, f"Winner: {winner}", font_scale=0.7, pos=(0, 375), text_color_bg=(255, 0, 0))
+                            draw_text(frame, f"{verdict} {winner} wins.", font_scale=0.7, pos=(0, 350), text_color_bg=(255, 0, 0))
+                            #draw_text(frame, f"Winner: {winner}", font_scale=0.7, pos=(0, 375), text_color_bg=(255, 0, 0))
 
                             
                             #cv2.putText(frame, f"CPU: {cpu}", (0,225), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
@@ -482,7 +481,7 @@ def main():
                     last_pose = current_pose #for comparison: did it change recently?
                     
                     #cv2.putText(frame, f"Detected Pose: {current_pose}", (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                    draw_text(frame, status, font_scale=0.7, pos=(0, 50), text_color_bg=(255, 0, 0))
+                   
                     
                     #cv2.putText(frame, status, (0,50), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
                     cv2.putText(frame, label, (x_min - 15, y_min - 15), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
@@ -496,8 +495,9 @@ def main():
         #cv2.putText(frame, str(current_time - start_time), (0,100), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
         #cv2.putText(frame, str(f"Held for: {timer_value:.2f}"), (0,25), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
 
-        
+        draw_text(frame, status, font_scale=0.7, pos=(0, 50), text_color_bg=(255, 0, 0))
         draw_text(frame, str(f"Held for: {timer_value:.2f}"), font_scale=0.7, pos=(0, 25), text_color_bg=(255, 0, 0))
+        draw_text(frame, f"User: {user_points}, CPU: {cpu_points}", font_scale=0.7, pos=(0, 450), text_color_bg=(255, 0, 0))
 
 
 
