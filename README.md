@@ -8,16 +8,16 @@
 
 > For reference: https://www.youtube.com/watch?v=_PUEoDYpUyQ
 
--"Scissors cuts Paper,
--Paper covers Rock,
--Rock crushes Lizard,
--Lizard poisons Spock,
--Spock smashes Scissors,
--Scissors decapitates Lizard,
--Lizard eats Paper,
--Paper disproves Spock,
--Spock vaporizes Rock,
--(and as it always has) Rock crushes Scissors."
+- "Scissors cuts Paper,
+- Paper covers Rock,
+- Rock crushes Lizard,
+- Lizard poisons Spock,
+- Spock smashes Scissors,
+- Scissors decapitates Lizard,
+- Lizard eats Paper,
+- Paper disproves Spock,
+- Spock vaporizes Rock,
+- (and as it always has) Rock crushes Scissors."
 
 
 ### ✍️ Authors
@@ -39,6 +39,24 @@ Having issues? Make sure you're in a well-lit area and try to keep your hand ste
 - OpenCV version: 5.0.0
 - MediaPipe version: 1.1.0
 - Python Version: 3.13.16
+
+## Pose Guide
+
+
+Rock ✊
+- Checks for all fingers down, with palm towards camera. 
+
+Paper 🤚
+- Checks for all fingers up, with palm towards camera.
+
+Scissors ✌️
+- Checks for pointer + Middle fingers up ONLY, like a peace sign! And palm towards camera.
+
+Lizard 🤏
+- Turn your hand to the side and make a 'C' shape. Checks for clustered fingertips + a certain distance from pointer to thumb.
+
+Spock 🖖
+- Make a 'V'  with your middle and ring fingers, and make sure your thumb is pointed outwards. Checks for distance between ring and middle finger and distance from thumb to pointer tip. As always, palm towards camera.
 
 
 
