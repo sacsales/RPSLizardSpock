@@ -1,3 +1,5 @@
+#todo: score tracking, box around hand + timer, make it pretty, README 
+
 import math 
 import cv2
 import mediapipe as mp
@@ -53,14 +55,15 @@ LIZARD_MID_RING_THRESHOLD = 0.05
 POSE_TIMER_VALUE = 2.0
 
 def dist(a, b):
+    #find distance between 2 joint points
     return math.hypot(a.x - b.x, a.y - b.y)
-#find distance between 2 joint points
 
 def find_origin(frame, landmark):
     h, w = frame.shape[:2]
     return int(landmark.x * w), int (landmark.y * h)
 
 def draw_hand(frame, landmarks):
+
     h, w = frame.shape[:2]
     points = [(int(lm.x * w), int(lm.y * h)) for lm in landmarks] #map image coords to pixel coords
 
@@ -74,6 +77,9 @@ def draw_hand(frame, landmarks):
         origin = (p[0] + 6, p[1] + 4)
         #cv2.putText(frame, str(p), origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA) to label coords 
         #red dots on the joints
+
+
+
     
 def finger_up(single_hand_landmarks, finger_tip, finger_mid):
     #open: if tip->wrist greater than mid->wrist
@@ -300,12 +306,18 @@ def computer_choice():
 
 
 
+
+
 def main(): 
 
     timer_value = 0
     last_pose = None 
     verified_pose = None
     round_played = False 
+
+    red = (0,0,255)
+    blue = (255,0,0)
+    box_colour = red 
     
     while cap.isOpened():
 
@@ -315,6 +327,11 @@ def main():
 
         frame = cv2.flip(frame, 1)
         h, w, _ = frame.shape
+
+        x_max = 0
+        y_max = 0
+        x_min = w
+        y_min = h
 
         # fix colors
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -328,14 +345,27 @@ def main():
         if result.hand_landmarks: #landmarks detected??
             for single_hand_landmarks in result.hand_landmarks:  #result.hand_landmarks is different positions of hand.
                     draw_hand(frame, single_hand_landmarks) #single_hand_landmarks refers to an array of all the different joints in 1 hand pos...
+                    for landmark in single_hand_landmarks:
+                        x, y = int(landmark.x * w), int(landmark.y * h)
 
+                        if x > x_max:
+                            x_max = x
+                        if x < x_min:
+                            x_min = x
+                        if y > y_max:
+                            y_max = y
+                        if y < y_min:
+                            y_min = y
 
-                    finger_status_array = get_finger_array(single_hand_landmarks)
+                    cv2.rectangle(frame, (x_min - 15, y_min - 15), (x_max + 15, y_max + 15), box_colour, 2) #hand box 
+                    cv2.rectangle(frame, (x_min - 15, y_min - 15), (x_min + 100, y_min - 40), box_colour, -1) #detected label text bg
+                    
+                    
+                    
+                    #finger_status_array = get_finger_array(single_hand_landmarks)
 
                     pointer_tip = single_hand_landmarks[8]
                     thumb_tip = single_hand_landmarks[4]
-                    middle_tip = single_hand_landmarks[12]
-                    ring_tip = single_hand_landmarks[16]
 
                     mid_joint = single_hand_landmarks[11]
                     ring_joint = single_hand_landmarks[15]
@@ -383,18 +413,23 @@ def main():
                     else:
                         current_pose = "unknown"
 
+                    label = f"detecting: {current_pose}"
+
                     #run through possible poses, set the current pose
 
-                        
+                    
 
                     if last_pose == current_pose: 
                         #if no change in pose, add to pose timer
                         if not round_played:
                             status = "Hold that pose!"
                             timer_value = current_time - timer_start 
+                            label = f"detecting: {current_pose}"
 
                             if timer_value > POSE_TIMER_VALUE: #ie, player has held pose for long enough to play it
                                 verified_pose = current_pose
+                                label = verified_pose
+                                box_colour = blue
 
                                 user = verified_pose
                                 cpu = computer_choice()
@@ -406,6 +441,7 @@ def main():
                                 status = "Change pose to play again"
 
                         else:
+                            label = verified_pose
                             #display round results...
                             cv2.putText(frame, f"CPU: {cpu}", (0,225), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
                             cv2.putText(frame, f"User: {user}", (0,250), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
@@ -417,6 +453,8 @@ def main():
                     else: 
                         #pose changed, clear everything, and make a new timer
                         verified_pose = ""
+                        label = ""
+                        box_colour = red
                         timer_value = 0
                         status = "Pick a pose..."
                         timer_start = current_time
@@ -424,17 +462,18 @@ def main():
 
                     last_pose = current_pose #for comparison: did it change recently?
                     
-                    cv2.putText(frame, f"Detected Pose: {current_pose}", (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                    cv2.putText(frame, status, (0,75), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                    #cv2.putText(frame, f"Detected Pose: {current_pose}", (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                    cv2.putText(frame, status, (0,50), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
+                    cv2.putText(frame, label, (x_min - 15, y_min - 15), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+                    #set hand box text
                     
         else:
             timer_value = 0 #reset timer if user's hand not visible anymore 
 
         
-        cv2.putText(frame, f"verified_pose: {verified_pose}", (0,175), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+        #cv2.putText(frame, f"verified_pose: {verified_pose}", (0,75), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
         #cv2.putText(frame, str(current_time - start_time), (0,100), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-        cv2.putText(frame, str(f"Held for: {timer_value:.2f}"), (0,150), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-
+        cv2.putText(frame, str(f"Held for: {timer_value:.2f}"), (0,25), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
         cv2.imshow("Rock, Paper, Scissors, Lizard, Spock", frame)
 
         
@@ -458,13 +497,3 @@ def main():
 # to call the main() function.
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-
