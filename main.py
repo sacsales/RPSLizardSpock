@@ -79,8 +79,24 @@ def draw_hand(frame, landmarks):
         #red dots on the joints
 
 
+def draw_text(img, text,
+          font=cv2.FONT_HERSHEY_SIMPLEX,
+          pos=(0, 0),
+          font_scale=0.7,
+          font_thickness=1,
+          text_color=(0, 255, 0),
+          text_color_bg=(0, 0, 0)
+          ):
 
-    
+    x, y = pos
+    text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
+    text_w, text_h = text_size
+    cv2.rectangle(img, pos, (x + text_w, y + text_h), text_color_bg, -1)
+    cv2.putText(img, text, (x, y + text_h), font, font_scale, text_color, font_thickness)
+
+    return text_size
+
+
 def finger_up(single_hand_landmarks, finger_tip, finger_mid):
     #open: if tip->wrist greater than mid->wrist
     wrist = single_hand_landmarks[0]
@@ -305,9 +321,6 @@ def computer_choice():
 
 
 
-
-
-
 def main(): 
 
     timer_value = 0
@@ -362,16 +375,15 @@ def main():
                     
                     
                     
-                    #finger_status_array = get_finger_array(single_hand_landmarks)
+                    
 
                     pointer_tip = single_hand_landmarks[8]
                     thumb_tip = single_hand_landmarks[4]
-
                     mid_joint = single_hand_landmarks[11]
                     ring_joint = single_hand_landmarks[15]
                     #define needed joint names...
 
-                    #tip_array = [pointer_tip, thumb_tip, middle_tip, ring_tip]
+                    
 
                     cv2.line(frame, find_origin(frame, mid_joint), find_origin(frame, ring_joint), (0, 255, 0), 2) #spock line
                     cv2.line(frame, find_origin(frame, pointer_tip), find_origin(frame, thumb_tip), (0, 255, 0), 2) #pointer -> thumb line 
@@ -443,10 +455,17 @@ def main():
                         else:
                             label = verified_pose
                             #display round results...
-                            cv2.putText(frame, f"CPU: {cpu}", (0,225), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                            cv2.putText(frame, f"User: {user}", (0,250), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                            cv2.putText(frame, f"{verdict}", (0,275), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                            cv2.putText(frame, f"{winner} wins!", (0,300), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+
+                            draw_text(frame, f"CPU: {cpu}", font_scale=0.7, pos=(0, 300), text_color_bg=(255, 0, 0))
+                            draw_text(frame, f"User: {user}", font_scale=0.7, pos=(0, 325), text_color_bg=(255, 0, 0))
+                            draw_text(frame, f"{verdict}", font_scale=0.7, pos=(0, 350), text_color_bg=(255, 0, 0))
+                            draw_text(frame, f"Winner: {winner}", font_scale=0.7, pos=(0, 375), text_color_bg=(255, 0, 0))
+
+                            
+                            #cv2.putText(frame, f"CPU: {cpu}", (0,225), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                            #cv2.putText(frame, f"User: {user}", (0,250), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                            #cv2.putText(frame, f"{verdict}", (0,275), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
+                            #cv2.putText(frame, f"{winner} wins!", (0,300), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
 
 
                         
@@ -463,7 +482,9 @@ def main():
                     last_pose = current_pose #for comparison: did it change recently?
                     
                     #cv2.putText(frame, f"Detected Pose: {current_pose}", (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                    cv2.putText(frame, status, (0,50), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
+                    draw_text(frame, status, font_scale=0.7, pos=(0, 50), text_color_bg=(255, 0, 0))
+                    
+                    #cv2.putText(frame, status, (0,50), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
                     cv2.putText(frame, label, (x_min - 15, y_min - 15), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
                     #set hand box text
                     
@@ -473,7 +494,14 @@ def main():
         
         #cv2.putText(frame, f"verified_pose: {verified_pose}", (0,75), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
         #cv2.putText(frame, str(current_time - start_time), (0,100), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-        cv2.putText(frame, str(f"Held for: {timer_value:.2f}"), (0,25), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
+        #cv2.putText(frame, str(f"Held for: {timer_value:.2f}"), (0,25), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
+
+        
+        draw_text(frame, str(f"Held for: {timer_value:.2f}"), font_scale=0.7, pos=(0, 25), text_color_bg=(255, 0, 0))
+
+
+
+
         cv2.imshow("Rock, Paper, Scissors, Lizard, Spock", frame)
 
         
