@@ -11,6 +11,9 @@ import random
 RANDOM_MIN = 0
 RANDOM_MAX = 3
 
+print(f"OpenCV version: {cv2.__version__}")
+print(f"MediaPipe version: {mp.__version__}")
+
 
 start_time = time.time()
 
@@ -267,10 +270,10 @@ def double_check(p1, p2):
     if fight(p1, p2) == "Draw":
         winner = "No one"
     elif fight(p1,p2) != "":
-        print(fight(p1, p2))
+        #print(fight(p1, p2))
         winner = "User"
     else: #switch
-        print(fight(p2, p1))
+        #print(fight(p2, p1))
         winner = "CPU"
     return winner
 
