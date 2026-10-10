@@ -8,16 +8,16 @@
 
 > For reference: https://www.youtube.com/watch?v=_PUEoDYpUyQ
 
-> "Scissors cuts Paper,
->Paper covers Rock,
->Rock crushes Lizard,
->Lizard poisons Spock,
->Spock smashes Scissors,
->Scissors decapitates Lizard,
->Lizard eats Paper,
->Paper disproves Spock,
->Spock vaporizes Rock,
->(and as it always has) Rock crushes Scissors."
+-"Scissors cuts Paper,
+-Paper covers Rock,
+-Rock crushes Lizard,
+-Lizard poisons Spock,
+-Spock smashes Scissors,
+-Scissors decapitates Lizard,
+-Lizard eats Paper,
+-Paper disproves Spock,
+-Spock vaporizes Rock,
+-(and as it always has) Rock crushes Scissors."
 
 
 ### ✍️ Authors
@@ -36,9 +36,9 @@ Make a pose from Rock(✊), Paper (🤚), Scissors (✌️), Lizard (🤏) or Sp
 
 Having issues? Make sure you're in a well-lit area and try to keep your hand steady. If the pose detected keeps switching, try moving your hand closer/farther from the webcam until it stabilises. 
 
-OpenCV version: 5.0.0
-MediaPipe version: 1.1.0
-Python Version: 3.13.16
+- OpenCV version: 5.0.0
+- MediaPipe version: 1.1.0
+- Python Version: 3.13.16
 
 
 
