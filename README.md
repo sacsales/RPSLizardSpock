@@ -20,6 +20,10 @@
 - (and as it always has) Rock crushes Scissors."
 
 
+### Demo! 
+https://github.com/user-attachments/assets/b63b49ac-f5db-43ce-9a7e-aa0e7bcb7b19
+
+
 ### ✍️ Authors
 
 https://github.com/sacsales (me!)
