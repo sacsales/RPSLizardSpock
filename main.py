@@ -1,4 +1,4 @@
-#todo: score tracking, box around hand + timer, make it pretty, README 
+
 
 import math 
 import cv2
@@ -13,17 +13,8 @@ RANDOM_MAX = 3
 
 
 start_time = time.time()
-timer_value = 0
-last_pose = None 
-verified_pose = None 
-
-round = 0 
 
 font = cv2.FONT_HERSHEY_SIMPLEX
-
-print("MediaPipe version:", mp.__version__)
-print("OpenCV version:", cv2.__version__)
-
 
 base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
 options = vision.HandLandmarkerOptions(base_options=base_options,num_hands=1)
@@ -46,13 +37,15 @@ HAND_CONNECTIONS = [
     (0, 17),                                # palm edge
 ]
 
-
+#constants
 SPOCK_MID_RING_THRESHOLD = 0.09
 SPOCK_THUMB_POINTER_THRESHOLD = 0.20
 LIZARD_THUMB_POINTER_THRESHOLD = 0.10
 LIZARD_MID_RING_THRESHOLD = 0.05
-
 POSE_TIMER_VALUE = 2.0
+
+
+
 
 def dist(a, b):
     #find distance between 2 joint points
@@ -453,20 +446,12 @@ def main():
 
                         else:
                             label = verified_pose
-                            #display round results...
 
+                            #display round results...
                             draw_text(frame, f"CPU: {cpu}", font_scale=0.7, pos=(0, 300), text_color_bg=(255, 0, 0))
                             draw_text(frame, f"User: {user}", font_scale=0.7, pos=(0, 325), text_color_bg=(255, 0, 0))
                             draw_text(frame, f"{verdict} {winner} wins.", font_scale=0.7, pos=(0, 350), text_color_bg=(255, 0, 0))
-                            #draw_text(frame, f"Winner: {winner}", font_scale=0.7, pos=(0, 375), text_color_bg=(255, 0, 0))
-
-                            
-                            #cv2.putText(frame, f"CPU: {cpu}", (0,225), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                            #cv2.putText(frame, f"User: {user}", (0,250), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                            #cv2.putText(frame, f"{verdict}", (0,275), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                            #cv2.putText(frame, f"{winner} wins!", (0,300), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-
-
+                           
                         
                     else: 
                         #pose changed, clear everything, and make a new timer
@@ -480,20 +465,12 @@ def main():
 
                     last_pose = current_pose #for comparison: did it change recently?
                     
-                    #cv2.putText(frame, f"Detected Pose: {current_pose}", (0,50), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-                   
-                    
-                    #cv2.putText(frame, status, (0,50), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
                     cv2.putText(frame, label, (x_min - 15, y_min - 15), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
                     #set hand box text
                     
         else:
             timer_value = 0 #reset timer if user's hand not visible anymore 
 
-        
-        #cv2.putText(frame, f"verified_pose: {verified_pose}", (0,75), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
-        #cv2.putText(frame, str(current_time - start_time), (0,100), font, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
-        #cv2.putText(frame, str(f"Held for: {timer_value:.2f}"), (0,25), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
 
         draw_text(frame, status, font_scale=0.7, pos=(0, 50), text_color_bg=(255, 0, 0))
         draw_text(frame, str(f"Held for: {timer_value:.2f}"), font_scale=0.7, pos=(0, 25), text_color_bg=(255, 0, 0))
@@ -502,14 +479,13 @@ def main():
 
 
 
-        cv2.imshow("Rock, Paper, Scissors, Lizard, Spock", frame)
 
-        
+        cv2.imshow("Rock, Paper, Scissors, Lizard, Spock", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-        #user_choice = verified_pose
+        
 
 
   
