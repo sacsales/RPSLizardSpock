@@ -12,6 +12,9 @@ import sys, os
 
 RANDOM_MIN = 0
 RANDOM_MAX = 3
+DISPLAY_W, DISPLAY_H = 1280, 720
+TEXT_SCALE = 1.4
+TEXT_THICK = 1
 
 print(f"OpenCV version: {cv2.__version__}")
 print(f"MediaPipe version: {mp.__version__}")
@@ -36,8 +39,8 @@ detector = vision.HandLandmarker.create_from_options(options)
 
 
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 600)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 500)
+#cap.set(cv2.CAP_PROP_FRAME_WIDTH, 600)
+#cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 500)
 #setup webcam/window frame...
 
 #for the skeleton - which hand landmarks map to which? 
@@ -77,11 +80,11 @@ def draw_hand(frame, landmarks):
 
 
     for a, b in HAND_CONNECTIONS:
-        cv2.line(frame, points[a], points[b], (0, 255, 0), 2) #draw lines
+        cv2.line(frame, points[a], points[b], (0, 255, 0), 3) #draw lines
 
     
     for p in points:
-        cv2.circle(frame, p, 4, (0, 0, 255), -1)
+        cv2.circle(frame, p, 6, (0, 0, 255), -1)
         origin = (p[0] + 6, p[1] + 4)
         #cv2.putText(frame, str(p), origin, font, 0.4, (255, 255, 255), 1, cv2.LINE_AA) to label coords 
         #red dots on the joints
@@ -90,8 +93,8 @@ def draw_hand(frame, landmarks):
 def draw_text(img, text,
           font=cv2.FONT_HERSHEY_SIMPLEX,
           pos=(0, 0),
-          font_scale=0.7,
-          font_thickness=1,
+          font_scale=TEXT_SCALE,
+          font_thickness=TEXT_THICK,
           text_color=(0, 255, 0),
           text_color_bg=(0, 0, 0)
           ):
@@ -100,7 +103,7 @@ def draw_text(img, text,
     text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
     text_w, text_h = text_size
     cv2.rectangle(img, pos, (x + text_w, y + text_h), text_color_bg, -1)
-    cv2.putText(img, text, (x, y + text_h), font, font_scale, text_color, font_thickness)
+    cv2.putText(img, text, (x, y + text_h), font, font_scale, text_color, font_thickness, cv2.LINE_AA)
 
     return text_size
 
@@ -349,7 +352,9 @@ def main():
     red = (0,0,255)
     blue = (255,0,0)
     box_colour = red 
-    
+    cv2.namedWindow("Rock, Paper, Scissors, Lizard, Spock", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("Rock, Paper, Scissors, Lizard, Spock", DISPLAY_W, DISPLAY_H)
+
     while cap.isOpened():
 
         success, frame = cap.read()
@@ -357,6 +362,7 @@ def main():
             continue
 
         frame = cv2.flip(frame, 1)
+        frame = cv2.resize(frame, (DISPLAY_W, DISPLAY_H))
         h, w, _ = frame.shape
 
         x_max = 0
@@ -389,7 +395,7 @@ def main():
                             y_min = y
 
                     cv2.rectangle(frame, (x_min - 15, y_min - 15), (x_max + 15, y_max + 15), box_colour, 2) #hand box 
-                    cv2.rectangle(frame, (x_min - 15, y_min - 15), (x_min + 100, y_min - 40), box_colour, -1) #detected label text bg
+                    #cv2.rectangle(frame, (x_min - 15, y_min - 15), (x_min + 100, y_min - 40), box_colour, -1)
                     #making the hand box
                     
                     
@@ -461,9 +467,9 @@ def main():
                             label = verified_pose
 
                             #display round results...
-                            draw_text(frame, f"CPU: {cpu}", font_scale=0.7, pos=(0, 300), text_color_bg=(255, 0, 0))
-                            draw_text(frame, f"User: {user}", font_scale=0.7, pos=(0, 325), text_color_bg=(255, 0, 0))
-                            draw_text(frame, f"{verdict} {winner} wins.", font_scale=0.7, pos=(0, 350), text_color_bg=(255, 0, 0))
+                            draw_text(frame, f"CPU: {cpu}", pos=(10, 400), text_color_bg=(255, 0, 0))
+                            draw_text(frame, f"User: {user}", pos=(10, 445), text_color_bg=(255, 0, 0))
+                            draw_text(frame, f"{verdict} {winner} wins.", pos=(10, 490), text_color_bg=(255, 0, 0))
                            
                         
                     else: 
@@ -477,17 +483,20 @@ def main():
                         round_played = False 
 
                     last_pose = current_pose #for comparison: did it change recently?
-                    
+
+                    cv2.rectangle(frame, (x_min - 15, y_min - 15), (x_min + 100, y_min - 40), box_colour, -1)
                     cv2.putText(frame, label, (x_min - 15, y_min - 15), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
                     #set hand box text
                     
         else:
             timer_value = 0 #reset timer if user's hand not visible anymore 
 
+       
 
-        draw_text(frame, status, font_scale=0.7, pos=(0, 50), text_color_bg=(255, 0, 0))
-        draw_text(frame, str(f"Held for: {timer_value:.2f}"), font_scale=0.7, pos=(0, 25), text_color_bg=(255, 0, 0))
-        draw_text(frame, f"User: {user_points}, CPU: {cpu_points}", font_scale=0.7, pos=(0, 450), text_color_bg=(255, 0, 0))
+
+        draw_text(frame, status, pos=(10, 55), text_color_bg=(255, 0, 0))
+        draw_text(frame, f"Held for: {timer_value:.2f}", pos=(10, 10), text_color_bg=(255, 0, 0))
+        draw_text(frame, f"User: {user_points}, CPU: {cpu_points}", pos=(10, DISPLAY_H - 50), text_color_bg=(255, 0, 0))
 
 
 
