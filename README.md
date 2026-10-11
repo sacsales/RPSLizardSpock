@@ -34,7 +34,7 @@ https://github.com/sacsales (me!)
 ### Scenario 1: I know how to clone a repo! 
 > If so, awesome! Please do that.
 
-### Scenario 2: I have no idea what the above line means/don't feel like cloning a repo/ AND I have a Mac. 
+### Scenario 2: I have no idea what the above line means/don't feel like cloning a repo AND I have a An Apple Silicon Mac. 
 > No problem, please follow the steps below:
 1. Download the latest release from the releases tab on the right-hand side of this page. Click on 'main.zip'. It should download. Unzip it!
 2. Open up Terminal. Navigate to the file you you just unzipped. To do this, type `cd` and enter the file path (you can also drag and drop the folder from your finder window!) Entire command should look a little something like this:
