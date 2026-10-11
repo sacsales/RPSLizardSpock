@@ -7,6 +7,8 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import time
 import random
+import sys, os
+
 
 RANDOM_MIN = 0
 RANDOM_MAX = 3
@@ -19,7 +21,15 @@ start_time = time.time()
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+
+def resource_path(relative):
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, relative)
+
+
+
+base_options = python.BaseOptions(model_asset_path=resource_path('hand_landmarker.task'))
+
 options = vision.HandLandmarkerOptions(base_options=base_options,num_hands=1)
 detector = vision.HandLandmarker.create_from_options(options)
 #setup the hand tracking stuff
