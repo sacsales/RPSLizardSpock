@@ -40,7 +40,7 @@ https://github.com/sacsales (me!)
 2. Open up Terminal. Navigate to the file you you just unzipped. To do this, type `cd` and enter the file path (you can also drag and drop the folder from your finder window!) Entire command should look a little something like this:
 ```cd /Users/yourname/Downloads/main```
 4. Run this command next: `xattr -cr .` This avoids your Mac thinking it's a sketchy program. I swear it isn't, check the code (trust me bro)
-5. Last one! Run `./main.` and wait for a bit. It might ask you for camera permissions - click yes. If nothing happens after about a minute, try running the last command again. 
+5. Last one! Run `./main` and wait for a bit. It might ask you for camera permissions - click yes. If nothing happens after about a minute, try running the last command again. 
 
 
 ## 🚀 Usage
