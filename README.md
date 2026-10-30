@@ -72,6 +72,11 @@ Spock (🖖)
 - Make a 'V'  with your middle and ring fingers, and make sure your thumb is pointed outwards. Checks for distance between ring and middle finger and distance from thumb to pointer tip. As always, palm towards camera.
 
 
+## Tutorials/References
+- https://www.youtube.com/watch?v=a99p_fAr6e4&t=2209s
+- https://www.youtube.com/watch?v=1lN4L74BwWo
+
+
 
 ## 💭 Feedback
 Any ideas/comments? Say hi on discord. 
